@@ -67,6 +67,10 @@ function createSlugFromTitle(title) {
     .replace(/[^a-z0-9_-]/g, '');
 }
 
+function normalizeProvidedSlug(slug) {
+  return slug.toLowerCase();
+}
+
 function truncateSlug(slug, maxLength) {
   return slug.slice(0, maxLength).replace(/[-_]+$/g, '');
 }
@@ -131,6 +135,10 @@ async function createCreatorCard(serviceData) {
   const accessType = normalizeAccess(data);
 
   validateServiceRates(data);
+
+  if (data.slug) {
+    data.slug = normalizeProvidedSlug(data.slug);
+  }
 
   if (data.slug && !CREATOR_CARD_SLUG_PATTERN.test(data.slug)) {
     throwAppError(CreatorCardMessages.INVALID_SLUG_FORMAT, ERROR_CODE.VALIDATIONERR);

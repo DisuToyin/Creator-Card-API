@@ -398,6 +398,119 @@ The framework will automatically load all `.js` files in the folder.
 
 ---
 
+## Creator Cards API
+
+This project implements Creator Cards at the root API path with no auth middleware and no route versioning.
+
+### Endpoints
+
+```text
+POST   /creator-cards
+GET    /creator-cards/:slug
+DELETE /creator-cards/:slug
+```
+
+### Create A Creator Card
+
+```bash
+curl -X POST http://localhost:3000/creator-cards \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "George Cooks",
+    "description": "George Cooks is a weekly cooking podcast by Chef George AmadiObi",
+    "slug": "george-cooks",
+    "creator_reference": "crt_8f2k1m9x4p7w3q5z",
+    "links": [
+      {"title": "YouTube Channel", "url": "https://youtube.com/@georgecooks"}
+    ],
+    "service_rates": {
+      "currency": "NGN",
+      "rates": [
+        {"name": "IG Story Post", "description": "One Instagram story mention", "amount": 5000000}
+      ]
+    },
+    "status": "published",
+    "access_type": "public"
+  }'
+```
+
+Success returns HTTP 200:
+
+```json
+{
+  "status": "success",
+  "message": "Creator Card Created Successfully.",
+  "data": {
+    "id": "01JG8XYZA2B3C4D5E6F7G8H9J0",
+    "title": "George Cooks",
+    "slug": "george-cooks",
+    "creator_reference": "crt_8f2k1m9x4p7w3q5z",
+    "status": "published",
+    "access_type": "public",
+    "access_code": null,
+    "created": 1767052800000,
+    "updated": 1767052800000,
+    "deleted": null
+  }
+}
+```
+
+### Retrieve A Public Card
+
+```bash
+curl http://localhost:3000/creator-cards/george-cooks
+```
+
+Private cards require an access code query parameter:
+
+```bash
+curl "http://localhost:3000/creator-cards/george-cooks?access_code=A1B2C3"
+```
+
+Retrieval responses omit `access_code` entirely, even for private cards accessed with the correct code.
+
+### Delete A Creator Card
+
+```bash
+curl -X DELETE http://localhost:3000/creator-cards/george-cooks \
+  -H "Content-Type: application/json" \
+  -d '{"creator_reference":"crt_8f2k1m9x4p7w3q5z"}'
+```
+
+Delete is a soft delete. The card remains in MongoDB with a numeric `deleted` timestamp, and public retrieval returns HTTP 404 with `NF01` afterward.
+
+### Error Codes
+
+Field-level validation errors are handled by VSL and return HTTP 400.
+
+Business-rule errors use the template error utilities and return these exact codes:
+
+```text
+SL02  400  Slug is already taken
+AC01  400  access_code is required when access_type is private
+AC05  400  access_code can only be set on private cards
+NF01  404  Creator card not found
+NF02  404  card exists but is a draft
+AC03  403  This card is private. An access code is required
+AC04  403  Invalid access code
+```
+
+### Implementation Additions
+
+- Client-provided slugs are trimmed by VSL and normalized to lowercase before uniqueness checks and persistence.
+- Slug uniqueness checks only active cards, so soft-deleted cards do not block slug reuse.
+- Duplicate-key races are still handled and returned as `SL02`.
+- Delete sets `deleted` and `updated` to the same timestamp.
+- Focused service/helper tests cover valid and invalid creator-card cases without requiring a live MongoDB connection.
+
+Run the focused Creator Cards tests:
+
+```bash
+npx mocha test/creator-cards.test.js --require dotenv/config
+```
+
+---
+
 ## Using Middleware (Optional)
 
 Middleware runs before your endpoint handler. Use it for cross-cutting concerns like authentication, logging, or validation.
