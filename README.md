@@ -33,31 +33,49 @@ No auth is required. The routes are mounted at the root of the base URL with no 
 
 ## Create Creator Card
 
-```bash
-curl -X POST http://localhost:3000/creator-cards \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "George Cooks",
-    "description": "George Cooks is a weekly cooking podcast by Chef George AmadiObi",
-    "slug": "george-cooks",
-    "creator_reference": "crt_8f2k1m9x4p7w3q5z",
-    "links": [
-      {"title": "YouTube Channel", "url": "https://youtube.com/@georgecooks"},
-      {"title": "Instagram", "url": "https://instagram.com/georgecooks"}
-    ],
-    "service_rates": {
-      "currency": "NGN",
-      "rates": [
-        {"name": "IG Story Post", "description": "One Instagram story mention", "amount": 5000000},
-        {"name": "Recipe Feature", "description": "Featured recipe segment on the podcast", "amount": 15000000}
-      ]
-    },
-    "status": "published",
-    "access_type": "public"
-  }'
+```text
+POST /creator-cards
 ```
 
-Success response:
+Request:
+
+```json
+{
+  "title": "George Cooks",
+  "description": "George Cooks is a weekly cooking podcast by Chef George AmadiObi",
+  "slug": "george-cooks",
+  "creator_reference": "crt_8f2k1m9x4p7w3q5z",
+  "links": [
+    {
+      "title": "YouTube Channel",
+      "url": "https://youtube.com/@georgecooks"
+    },
+    {
+      "title": "Instagram",
+      "url": "https://instagram.com/georgecooks"
+    }
+  ],
+  "service_rates": {
+    "currency": "NGN",
+    "rates": [
+      {
+        "name": "IG Story Post",
+        "description": "One Instagram story mention",
+        "amount": 5000000
+      },
+      {
+        "name": "Recipe Feature",
+        "description": "Featured recipe segment on the podcast",
+        "amount": 15000000
+      }
+    ]
+  },
+  "status": "published",
+  "access_type": "public"
+}
+```
+
+Response:
 
 ```json
 {
@@ -94,17 +112,26 @@ If `slug` is omitted, the service generates one from the title. Client-provided 
 
 ## Retrieve Creator Card
 
-```bash
-curl http://localhost:3000/creator-cards/george-cooks
+```text
+GET /creator-cards/george-cooks
 ```
 
 Private cards require an access code:
 
-```bash
-curl "http://localhost:3000/creator-cards/george-cooks?access_code=A1B2C3"
+```text
+GET /creator-cards/george-cooks?access_code=A1B2C3
 ```
 
-Success response:
+Request parameters:
+
+```json
+{
+  "slug": "george-cooks",
+  "access_code": "A1B2C3"
+}
+```
+
+Response:
 
 ```json
 {
@@ -138,17 +165,24 @@ Retrieval responses omit `access_code` entirely, even for private cards accessed
 
 ## Delete Creator Card
 
-```bash
-curl -X DELETE http://localhost:3000/creator-cards/george-cooks \
-  -H "Content-Type: application/json" \
-  -d '{"creator_reference":"crt_8f2k1m9x4p7w3q5z"}'
+```text
+DELETE /creator-cards/george-cooks
+```
+
+Request:
+
+```json
+{
+  "slug": "george-cooks",
+  "creator_reference": "crt_8f2k1m9x4p7w3q5z"
+}
 ```
 
 Delete is a soft delete. The card remains in MongoDB with a numeric `deleted` timestamp, and public retrieval returns `NF01` afterward.
 
 If the slug exists but the supplied `creator_reference` does not match, the API still returns `NF01`. This avoids revealing whether a card exists to callers that do not know the creator reference.
 
-Success response:
+Response:
 
 ```json
 {
